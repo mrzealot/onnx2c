@@ -89,3 +89,24 @@ void Node::multidirectional_broadcast_size(
 		}
 }
 
+
+int Node::attr_helper_int(const onnx::AttributeProto &a, const std::string &name) {
+	if( a.type() != onnx::AttributeProto_AttributeType_INT )
+		ERROR("Wrong attribute type for " + op_name + " attribute '" + name + "'");
+
+	return a.i();
+}
+
+float Node::attr_helper_float(const onnx::AttributeProto &a, const std::string &name) {
+	if( a.type() != onnx::AttributeProto_AttributeType_FLOAT )
+		ERROR("Wrong attribute type for " + op_name + " attribute '" + name + "'");
+
+	return a.f();
+}
+
+const std::string& Node::attr_helper_string(const onnx::AttributeProto &a, const std::string &name) {
+	if( a.type() != onnx::AttributeProto_AttributeType_STRING )
+		ERROR("Wrong attribute type for " + op_name + " attribute '" + name + "'");
+
+	return a.s();
+}

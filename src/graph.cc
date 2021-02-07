@@ -17,14 +17,30 @@ Graph::Graph(
 	)
 	:model(onnx_model), verbose_mode(verbose)
 {
-
 	AixLog::Severity s = AixLog::Severity::fatal; // there is no "off"
 	if( verbose )
 		s = AixLog::Severity::trace;
 	AixLog::Log::init<AixLog::SinkCerr>(s);
 
-
 	onnx::GraphProto onnx_graph = onnx_model.graph();
+
+	// -1: pre-filter all unimplemented node types
+	std::set<std::string> misses;
+	for ( auto n : onnx_graph.node() ) {
+		Node *temp = findNode( n.op_type() );
+		if (temp == NULL) {
+			misses.insert(n.op_type());
+		} else delete temp;
+	}
+	if (misses.size()) {
+		std::string err = "Unimplemented node types in graph: ";
+		for (auto const& e : misses) {
+			err += e +  ", ";
+		}
+		err.pop_back();
+		err.pop_back();
+		ERROR(err);
+	}
 
 	// 0. add provided external initializers (from test bench
 	for( auto t : ext_inputs )
@@ -233,10 +249,13 @@ bool Graph::hasUnresolvedNodes(void)
 #include "nodes/conv.h"
 #include "nodes/dropout.h"
 #include "nodes/flatten.h"
+#include "nodes/gemm.h"
 #include "nodes/globalaveragepool.h"
+#include "nodes/leakyrelu.h"
 #include "nodes/lstm.h"
 #include "nodes/matmul.h"
 #include "nodes/maxpool.h"
+#include "nodes/pad.h"
 #include "nodes/relu.h"
 #include "nodes/reshape.h"
 #include "nodes/sigmoid.h"
@@ -244,6 +263,7 @@ bool Graph::hasUnresolvedNodes(void)
 #include "nodes/softmax.h"
 #include "nodes/transpose.h"
 #include "nodes/unsqueeze.h"
+#include "nodes/upsample.h"
 
 Node* Graph::findNode(std::string opName)
 {
@@ -254,10 +274,13 @@ Node* Graph::findNode(std::string opName)
 	if( opName == "Conv" )return new Conv;
 	if( opName == "Dropout" )return new Dropout;
 	if( opName == "Flatten" )return new Flatten;
+	if( opName == "Gemm" )return new Gemm;
 	if( opName == "GlobalAveragePool" )return new GlobalAveragePool;
+	if( opName == "LeakyRelu" )return new LeakyRelu;
 	if( opName == "LSTM" )return new LSTM;
 	if( opName == "MatMul" )return new MatMul;
 	if( opName == "MaxPool" )return new MaxPool;
+	if( opName == "Pad" )return new Pad;
 	if( opName == "Relu" )return new Relu;
 	if( opName == "Reshape" )return new Reshape;
 	if( opName == "Sigmoid" )return new Sigmoid;
@@ -265,8 +288,8 @@ Node* Graph::findNode(std::string opName)
 	if( opName == "Softmax" )return new Softmax;
 	if( opName == "Transpose" )return new Transpose;
 	if( opName == "Unsqueeze" )return new Unsqueeze;
+	if( opName == "Upsample" )return new Upsample;
 
-	ERROR("Unimplemented: node operation " << opName);
 	return NULL;
 }
 

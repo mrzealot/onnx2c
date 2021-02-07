@@ -21,6 +21,8 @@ class Node {
 	std::string onnx_name; //ONNX name of the individual node
 	std::string op_name;   //ONNX name of node type
 
+	virtual ~Node() {}
+
 	/* Create the C source name. Replace all non a-z,A-Z,0-9 or _
 	 * characters. Also prefix name since ONNX allows tensors and nodes
 	 * to have the same name */
@@ -56,6 +58,11 @@ class Node {
 	{
 		ERROR("Attribute parsing not implemented for node operation type " << op_name);
 	}
+
+	/* Extra (generic) attribute helpers */
+	int attr_helper_int(const onnx::AttributeProto &a, const std::string &name);
+	float attr_helper_float(const onnx::AttributeProto &a, const std::string &name);
+	const std::string& attr_helper_string(const onnx::AttributeProto &a, const std::string &name);
 
 	/* TODO: these should be part of class Tensor... */
 	/* Check input constraints, as used in 
