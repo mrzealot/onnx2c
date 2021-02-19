@@ -33,7 +33,10 @@ class Node {
 
 
 	/* Print the C implmementation of the operator */
-	virtual void print(std::ostream &destination) const = 0; 
+	virtual void print(std::ostream &destination) const = 0;
+
+	/* Print potential helper functions, once per node type */
+	virtual void print_helpers(std::ostream &destination ) const {}
 
 	/* Print comma-separated list of function parameters.
 	 * Unused optional tensors skipped. e.g.:
@@ -61,6 +64,7 @@ class Node {
 
 	/* Extra (generic) attribute helpers */
 	int attr_helper_int(const onnx::AttributeProto &a, const std::string &name);
+	std::vector<int> attr_helper_intarr(const onnx::AttributeProto &a, const std::string &name);
 	float attr_helper_float(const onnx::AttributeProto &a, const std::string &name);
 	const std::string& attr_helper_string(const onnx::AttributeProto &a, const std::string &name);
 

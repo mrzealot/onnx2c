@@ -22,6 +22,14 @@ Graph::Graph(
 		s = AixLog::Severity::trace;
 	AixLog::Log::init<AixLog::SinkCerr>(s);
 
+	// get opset version
+	for (auto o : onnx_model.opset_import()) {
+		LOG(DEBUG) << "ONNX OPSET " << o.domain() << " v" << o.version() << std::endl;
+		if (o.domain() == "") {
+			this->version = o.version();
+		}
+	}
+
 	onnx::GraphProto onnx_graph = onnx_model.graph();
 
 	// -1: pre-filter all unimplemented node types
@@ -29,7 +37,7 @@ Graph::Graph(
 	for ( auto n : onnx_graph.node() ) {
 		Node *temp = findNode( n.op_type() );
 		if (temp == NULL) {
-			misses.insert(n.op_type());
+			misses.insert(n.op_type() + " v" + std::to_string(version));
 		} else delete temp;
 	}
 	if (misses.size()) {

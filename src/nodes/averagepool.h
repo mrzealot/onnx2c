@@ -251,8 +251,8 @@ class AveragePool : public Node {
 		      ||typeConstraint_8bit(X)) )
 			ERROR("Incorrect input for node"); 
 
-		if( X->data_dim[0] != 1 )
-			ERROR("Unimplemented: AveragePool batches bigger than 1");
+		// if( X->data_dim[0] != 1 )
+		// 	ERROR("Unimplemented: AveragePool batches bigger than 1");
 
 
 		if( kernel_shape.size() == 0 )

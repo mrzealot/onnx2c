@@ -97,6 +97,17 @@ int Node::attr_helper_int(const onnx::AttributeProto &a, const std::string &name
 	return a.i();
 }
 
+std::vector<int> Node::attr_helper_intarr(const onnx::AttributeProto &a, const std::string &name) {
+	if( a.type() != onnx::AttributeProto_AttributeType_INTS )
+		ERROR("Wrong attribute type for " + op_name + " attribute '" + name + "'");
+ 
+	std::vector<int> ret;
+	for( auto i : a.ints() ) {
+		ret.push_back(i);
+	}
+	return ret;
+}
+
 float Node::attr_helper_float(const onnx::AttributeProto &a, const std::string &name) {
 	if( a.type() != onnx::AttributeProto_AttributeType_FLOAT )
 		ERROR("Wrong attribute type for " + op_name + " attribute '" + name + "'");

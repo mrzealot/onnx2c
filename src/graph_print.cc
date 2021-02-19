@@ -61,7 +61,15 @@ void Graph::print_global_tensors(std::ostream &dst)
 
 void Graph::print_functions(std::ostream &dst)
 {
+	std::set<std::string> seen;
+
 	for( auto n : nodes ) {
+
+		if (seen.find(n->op_name) == seen.end()) {
+			seen.insert(n->op_name);
+			n->print_helpers(dst);
+		}
+
 		dst << "static inline void ";
 		dst << n->c_name() << "( ";
 		n->print_parameters(dst, true);

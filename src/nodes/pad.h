@@ -5,17 +5,16 @@ class Pad : public Node {
 
 	// attributes
 	std::string mode;
+	std::vector<int> pads;
+	float value;
 
 	// inputs
 	const Tensor* data;
-	const Tensor* pads;
-	// optional input
-	const Tensor* constant;
 
 	// output
 	const Tensor* output;
 
-	Pad() : mode("constant"), data(NULL), pads(NULL), constant(NULL), output(NULL) {
+	Pad() : mode("constant"), pads(), value(0.0), data(NULL), output(NULL) {
 		op_name = "Pad";
 	}
 
@@ -23,12 +22,6 @@ class Pad : public Node {
 	{
 		data->print_tensor(dst, !decorate);
 		dst << ", ";
-		pads->print_tensor(dst, !decorate);
-		dst << ", ";
-		if( constant ) {
-			constant->print_tensor(dst, !decorate);
-			dst << ", ";
-		}
 		output->print_tensor(dst, !decorate);
 	}
 
@@ -38,6 +31,10 @@ class Pad : public Node {
 		for( const auto& a : node.attribute() ) {
 			if( a.name() == "mode" )
 				mode = attr_helper_string(a, "mode");
+			else if( a.name() == "pads" )
+				pads = attr_helper_intarr(a, "pads");
+			else if( a.name() == "value" )
+				value = attr_helper_float(a, "value");
 		}
 
 	}
@@ -48,6 +45,16 @@ class Pad : public Node {
 	virtual void print(std::ostream &dst) const override
 	{
 		dst << "\t/* PLACEHOLDER for Pad */" << std::endl;
+
+		// just copy stuff over, like in Flatten
+		std::string type = data->data_type_str();
+
+		dst << "\t" << type << " *data = (" << type << "*)" << data->cname() << ";" << std::endl;
+		dst << "\t" << type << " *output = (" << type << "*)" << output->cname() << ";" << std::endl;
+
+		dst << "\t" << "for( uint32_t i=0; i<" << data->data_num_elem() << "; i++ )" << std::endl;
+		dst << "\t\toutput[i] = data[i];" << std::endl;
+		dst << std::endl;
 	}
 
 
@@ -58,32 +65,26 @@ class Pad : public Node {
 	{
 
 		data = inputs[0];
-		pads = inputs[1];
-		if( inputs.size() == 3 )
-			constant = inputs[2];
-		else
-			constant = NULL;
 
-		if( typeConstraint_int64(pads) == false )
-			ERROR("Incorrect pads input for node");
-
-		if (data->data_dim.size() * 2 != (unsigned long)pads->data_num_elem()) {
+		if (data->data_dim.size() * 2 != pads.size()) {
 			ERROR("Incorrect pads size");
-		}
-
-		if( pads->initialize == false ) {
-			ERROR("Padding to a run-time defined shape is not supported");
 		}
 
 		if (mode != "constant") {
 			ERROR("Unimplemented Pad mode: " + mode);
 		}
 
+		// TEMPORARY: allow only syntactic padding, where everything is 0 and the shape doesn't actually change
+		for (int p : pads) {
+			if (p != 0) {
+				ERROR("Temporaryly unimplemented: Non-zero pad within pads: " + std::to_string(p));
+			}
+		}
+
 		std::vector<int> new_dim;
 		int half = data->data_dim.size();
-		int64_t *pads_data = (int64_t*)(pads->data_buffer);
 		for (int i = 0; i < half; ++i) {
-			new_dim.push_back(data->data_dim[i] + pads_data[i] + pads_data[i + half]);
+			new_dim.push_back(data->data_dim[i] + pads[i] + pads[i + half]);
 		}
 
 		// TODO possible other attr/dimension checks

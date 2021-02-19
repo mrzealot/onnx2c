@@ -39,6 +39,8 @@ public:
 private:
 	// The top-level onnx object.
 	onnx::ModelProto &model;
+	// The default opset version.
+	unsigned version;
 	// The tensors of the network. Pointers are added to this
 	// vector as walking the graph resolves node outputs.
 	// Each node keeps pointers internally also to its own inputs&outputs
